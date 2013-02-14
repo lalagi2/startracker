@@ -56,7 +56,7 @@ void centroid( Mat_<uchar> image ) {
 							roi[k][l] = image(i + k - ((roiSize - 1) / 2), j + l - ((roiSize - 1) / 2));
 							isChecked[i + k - ((roiSize - 1) / 2)][j + l - ((roiSize - 1) / 2)] = true;
 						}
-//dsa
+
 						cout << (int)roi[k][l] << " ";
 					}
 					cout << endl;

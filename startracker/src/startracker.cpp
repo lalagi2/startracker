@@ -6,7 +6,7 @@ using namespace std;
 
 const int noiseTreshold = 16;
 const int starTreshold = 200;
-const int roiSize = 8;
+const int roiSize = 7;
 
 Mat_<uchar> preFiltered;
 
@@ -95,13 +95,17 @@ void centroiding( Mat_<uchar> image ) {
 					for (int k = 0; k < imageROI.cols; k++) {
 						for (int l = 0; l < imageROI.rows; l++) {
 							cout << (int)imageROI(k, l) << " ";
+
 						}
 						cout << endl;
 					}
+
+					for (int k = 0; k < roiSize; k++) {
+						for (int l = 0; l < roiSize; l++) {
+							isChecked[i + k - roiSize][j + l - roiSize] = true;
+						}
+					}
 				}
-
-
-
 
 				cout << endl;
 			}

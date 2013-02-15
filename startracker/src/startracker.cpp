@@ -100,8 +100,8 @@ void centroiding( Mat_<uchar> image ) {
 						cout << endl;
 					}
 
-					for (int k = 0; k < roiSize; k++) {
-						for (int l = 0; l < roiSize; l++) {
+					for (int l = 0; l < roiSize; l++) {
+						for (int k = 0; k < roiSize; k++) {
 							isChecked[i + k - roiSize][j + l - roiSize] = true;
 						}
 					}

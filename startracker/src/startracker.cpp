@@ -6,7 +6,7 @@ using namespace std;
 
 const int noiseTreshold = 70;
 const int starTreshold = 160;
-const int roiSize = 21;
+const int roiSize = 10;
 
 Mat_<uchar> preFiltered;
 
@@ -28,7 +28,7 @@ void centerOfMassCalculation(uchar roi[roiSize][roiSize], double& x, double& y, 
 	x = 0;
 	y = 0;
 
-	for (int i = 0; i < roiSize; i++) {
+	for (int i = 0; i < roiSize; i++) {//roi meretet valtoztatni
 		for (int j = 0; j < roiSize; j++) {
 			dn += (int)roi[j][i];
 		}
@@ -85,27 +85,11 @@ void centroiding( Mat_<uchar> image ) {
 			if ( (image(i, j) > starTreshold) && (isChecked[i][j] == false) ) {
 				//ROI, TALALAT
 				db++;
-				for (int l = 0; l < roiSize; l++) {
-					for (int k = 0; k < roiSize; k++) {
-						if ( (i + k - ((roiSize - 1) / 2)) < 0) {
-							roi[k][l] = (uchar)0;
-						}
-						else if ( (j + l - ((roiSize - 1) / 2)) < 0 ) {
-							roi[k][l] = (uchar)0;
-						}
-						else if( (i + k - ((roiSize - 1) / 2)) > image.rows ) {
-							roi[k][l] = (uchar)0;
-						}
-						else if ( (j + l - ((roiSize - 1) / 2)) > image.cols ){
-							roi[k][l] = (uchar)0;
-						}
-						else {
-							roi[k][l] = image(i + k - ((roiSize - 1) / 2), j + l - ((roiSize - 1) / 2));
-							isChecked[i + k - ((roiSize - 1) / 2)][j + l - ((roiSize - 1) / 2)] = true;
-							cout << i + k - ((roiSize - 1) / 2) << " " << j + l - ((roiSize - 1) / 2) << endl;
-						}
-					}
+				Mat_<uchar> imageROI;
+				if (i - roiSize > 0 && j - roiSize > 0 && i + roiSize < 600 && j + roiSize < 600) {
+					imageROI = image(Range(i - roiSize, i + roiSize), Range(j - roiSize, j + roiSize));
 				}
+
 				centerOfMassCalculation(roi, x, y, i, j);
 				centers[centerdb] = Point(x, y);
 				centerdb++;

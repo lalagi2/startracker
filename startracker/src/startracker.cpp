@@ -4,9 +4,9 @@
 using namespace cv;
 using namespace std;
 
-const int noiseTreshold = 70;
-const int starTreshold = 160;
-const int roiSize = 10;
+const int noiseTreshold = 16;
+const int starTreshold = 200;
+const int roiSize = 8;
 
 Mat_<uchar> preFiltered;
 
@@ -21,7 +21,7 @@ Mat preBinarizing ( Mat_<uchar> image ) {
 	return out;
 }
 
-void centerOfMassCalculation(uchar roi[roiSize][roiSize], double& x, double& y, int rowvalue, int columnvalue) {
+void centerOfMassCalculation(Mat_<uchar> roi, double& x, double& y, int rowvalue, int columnvalue) {
 	int dn = 0;
 	int roij = 0;
 	int roii = 0;
@@ -57,7 +57,7 @@ void centerOfMassCalculation(uchar roi[roiSize][roiSize], double& x, double& y, 
 	x += 0.5;
 	y += 0.5;
 
-	cout << x << " " << y<< endl;
+//	cout << x << " " << y<< endl;
 }
 
 Point centers[30];
@@ -88,11 +88,20 @@ void centroiding( Mat_<uchar> image ) {
 				Mat_<uchar> imageROI;
 				if (i - roiSize > 0 && j - roiSize > 0 && i + roiSize < 600 && j + roiSize < 600) {
 					imageROI = image(Range(i - roiSize, i + roiSize), Range(j - roiSize, j + roiSize));
+					centerOfMassCalculation(imageROI, x, y, i, j);
+					centers[centerdb] = Point2d(x, y);
+					centerdb++;
+
+					for (int k = 0; k < imageROI.cols; k++) {
+						for (int l = 0; l < imageROI.rows; l++) {
+							cout << (int)imageROI(k, l) << " ";
+						}
+						cout << endl;
+					}
 				}
 
-				centerOfMassCalculation(roi, x, y, i, j);
-				centers[centerdb] = Point(x, y);
-				centerdb++;
+
+
 
 				cout << endl;
 			}

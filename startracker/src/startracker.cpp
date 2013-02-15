@@ -95,7 +95,6 @@ void centroiding( Mat_<uchar> image ) {
 					for (int k = 0; k < imageROI.cols; k++) {
 						for (int l = 0; l < imageROI.rows; l++) {
 							cout << (int)imageROI(k, l) << " ";
-
 						}
 						cout << endl;
 					}

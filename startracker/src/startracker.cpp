@@ -5,10 +5,13 @@ using namespace cv;
 using namespace std;
 
 const int noiseTreshold = 16;
-const int starTreshold = 200;
-const int roiSize = 7;
+const int starTreshold = 195;
+const int roiSize = 6;
 
 Mat_<uchar> preFiltered;
+
+Point centers[30];
+int centerdb = 0;
 
 Mat preBinarizing ( Mat_<uchar> image ) {
 	Mat_<uchar> filter;
@@ -21,104 +24,87 @@ Mat preBinarizing ( Mat_<uchar> image ) {
 	return out;
 }
 
-void centerOfMassCalculation(Mat_<uchar> roi, double& x, double& y, int rowvalue, int columnvalue) {
+void centerOfMassCalculation(Point2d& center, int rowvalue, int columnvalue) {
 	int dn = 0;
-	int roij = 0;
-	int roii = 0;
-	x = 0;
-	y = 0;
 
-	for (int i = 0; i < roiSize; i++) {//roi meretet valtoztatni
-		for (int j = 0; j < roiSize; j++) {
-			dn += (int)roi[j][i];
+	center.x = 0;
+	center.y = 0;
+
+	for (int row = rowvalue - roiSize; row < rowvalue + roiSize + 1; row++) {
+		for (int col = columnvalue - roiSize; col < columnvalue + roiSize + 1; col++) {
+			dn += (int)preFiltered(row, col);
+			cout << (int)preFiltered(row, col) << " ";
+		}
+		cout << endl;
+	}
+
+	cout << dn << endl;
+
+	for (int row = rowvalue - roiSize; row < rowvalue + roiSize + 1; row++) {
+		for (int col = columnvalue - roiSize; col < columnvalue + roiSize + 1; col++) {
+			center.x += col * (int)preFiltered(row, col);
 		}
 	}
 
-//	cout << rowvalue << endl;
-	for (int j = columnvalue - (roiSize - 1) / 2; j < columnvalue + (roiSize - 1) / 2; j++) {
-		for (int i = 0; i < roiSize; i++) {
-			x += j * (int)roi[roij][i];
+	for (int row = rowvalue - roiSize; row < rowvalue + roiSize + 1; row++) {
+		for (int col = columnvalue - roiSize; col < columnvalue + roiSize + 1; col++) {
+			center.y += row * (int)preFiltered(row, col);
 		}
-		roij++;
 	}
 
-	roii = 0;
-	roij = 0;
-	for (int i = rowvalue - (roiSize - 1) / 2; i < rowvalue + (roiSize - 1) / 2; i++) {
-		for (int j = 0; j < roiSize; j++) {
-			y += i * (int)roi[j][roii];
-		}
-		roii++;
-	}
+	center.x /= dn;
+	center.y /= dn;
 
-	x /= dn;
-	y /= dn;
+//	center.x += 0.5;
+//	center.y += 0.5;
 
-	x += 0.5;
-	y += 0.5;
-
-//	cout << x << " " << y<< endl;
+//	cout << center.x << " " << center.y << endl;
 }
-
-Point centers[30];
-int centerdb = 0;
 
 void centroiding( Mat_<uchar> image ) {
 	bool isChecked[image.rows][image.cols];
-	uchar roi[roiSize][roiSize];
-	double x;
-	double y;
-
+	Point2d center(0, 0);
 	int db = 0;
 
 	//egyik pixelt sem neztuk meg, hogy nagyobb-e, mint a starTreshold kuszob
-	for (int i = 0; i < image.rows; i++) {
-		for (int j = 0; j < image.cols; j++) {
-			isChecked[i][j] = false;
+	for (int row = 0; row < image.rows; row++) {
+		for (int col = 0; col < image.cols; col++) {
+			isChecked[row][col] = false;
 		}
 	}
 
 	//csillag kutatasa pixelenkent
-	for (int j = 0; j < image.cols; j++) {
-		for (int i = 0; i < image.rows; i++) {
-			//ha csillagot talaltunk && meg nem ellenoriztuk / nem volt benne egy ROIban
-			if ( (image(i, j) > starTreshold) && (isChecked[i][j] == false) ) {
-				//ROI, TALALAT
-				db++;
-				Mat_<uchar> imageROI;
-				if (i - roiSize > 0 && j - roiSize > 0 && i + roiSize < 600 && j + roiSize < 600) {
-					imageROI = image(Range(i - roiSize, i + roiSize), Range(j - roiSize, j + roiSize));
-					centerOfMassCalculation(imageROI, x, y, i, j);
-					centers[centerdb] = Point2d(x, y);
+	for (int col = 0; col < image.cols; col++) {
+		for (int row = 0; row < image.rows; row++) {
+			//ha csillagot talaltunk && meg nem ellenoriztuk / az adott pixel meg nem volt benne egy ROIban
+			if ( (image(row, col) > starTreshold) && (isChecked[row][col] == false) ) {
+				//TALALAT, ha nem log ki a csillag ROI-ja a kepbol
+				if (row - roiSize > 0 && col - roiSize > 0 && row + roiSize < 600 && col + roiSize < 600) {
+					centerOfMassCalculation(center, row, col);
+					centers[centerdb] = center;
 					centerdb++;
 
-					for (int k = 0; k < imageROI.cols; k++) {
-						for (int l = 0; l < imageROI.rows; l++) {
-							cout << (int)imageROI(k, l) << " ";
-						}
-						cout << endl;
-					}
-
-					for (int l = 0; l < roiSize; l++) {
-						for (int k = 0; k < roiSize; k++) {
-							isChecked[i + k - roiSize][j + l - roiSize] = true;
+					db++;
+					//ROI pixeleit az ischeckedben truera allitjuk -> tobbet nem nezzuk meg ezeket a pixeleket
+					for (int k = 0; k < roiSize; k++) {
+						for (int l = 0; l < roiSize; l++) {
+							isChecked[row - k][col + l] = true;
+							isChecked[row + k][col - l] = true;
+							isChecked[row - k][col - l] = true;
+							isChecked[row + k][col + l] = true;
 						}
 					}
 				}
-
-				cout << endl;
 			}
-			isChecked[i][j] = true;
+			isChecked[row][col] = true;
 		}
 	}
 	cout << db;
 }
 
-
 int main( int argc, char** argv ) {
 	//kep betoltese
 	Mat input = imread( argv[1] );
-
 
 //	namedWindow("in");
 //	imshow("in", input);
@@ -129,22 +115,10 @@ int main( int argc, char** argv ) {
 	//eloszures
 	preFiltered = preBinarizing( preFiltered );
 
-//	for (int i = 0; i < preFiltered.rows; i++) {
-//		for (int j = 0; j < preFiltered.cols; j++) {
-//			if (preFiltered(j, i) > starTreshold) {
-//				if (preFiltered(j, i) > 20) {
-//					cout << (int) preFiltered(j, i) << " " << i << " " << j << endl;
-//				}
-//			}
-//
-//		}
-//	}
-
-
 	centroiding(preFiltered);
 
 	for (int i = 0; i < centerdb; i++) {
-		circle(preFiltered, centers[i], 6, Scalar(255, 0, 0));
+		circle(preFiltered, centers[i], 7, Scalar(255));
 	}
 
 	namedWindow( "out", CV_WINDOW_AUTOSIZE );

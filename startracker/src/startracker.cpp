@@ -6,7 +6,7 @@ using namespace std;
 
 const int noiseTreshold = 16;
 const int starTreshold = 195;
-const int roiSize = 6;
+const int roiSize = 11;
 
 Mat_<uchar> preFiltered;
 
@@ -25,20 +25,15 @@ Mat preBinarizing ( Mat_<uchar> image ) {
 }
 
 void centerOfMassCalculation(Point2d& center, int rowvalue, int columnvalue) {
-	int dn = 0;
+	Mat_<uchar> imageROI;
+	Scalar dn;
 
 	center.x = 0;
 	center.y = 0;
 
-	for (int row = rowvalue - roiSize; row < rowvalue + roiSize + 1; row++) {
-		for (int col = columnvalue - roiSize; col < columnvalue + roiSize + 1; col++) {
-			dn += (int)preFiltered(row, col);
-			cout << (int)preFiltered(row, col) << " ";
-		}
-		cout << endl;
-	}
-
-	cout << dn << endl;
+	//calculate ROI brightness
+	imageROI = preFiltered(Range(rowvalue - roiSize, rowvalue + roiSize), Range(columnvalue - roiSize, columnvalue + roiSize));
+	dn = sum(imageROI);
 
 	for (int row = rowvalue - roiSize; row < rowvalue + roiSize + 1; row++) {
 		for (int col = columnvalue - roiSize; col < columnvalue + roiSize + 1; col++) {
@@ -52,8 +47,8 @@ void centerOfMassCalculation(Point2d& center, int rowvalue, int columnvalue) {
 		}
 	}
 
-	center.x /= dn;
-	center.y /= dn;
+	center.x /= dn.val[0];
+	center.y /= dn.val[0];
 
 //	center.x += 0.5;
 //	center.y += 0.5;
